@@ -1,0 +1,38 @@
+#BigMformulation
+param L; 							#no. of shipping Locations
+param P; 							#no. of packages to shipped
+param V; 							#Total no. of vehicles available
+param K;							#Number of incompatible pair of packages
+param I{k in 1..K, r in 1..2};			#ID of package r of the kth incompatible pair, for r=1,2 for k=1..K
+param w{p in 1..P}; 					#weight of package p
+param s{p in 1..P}; 					#origin of package p
+param e{p in 1..P}; 					#destination of package p
+param f{p in 1..P}; 					#maximum transit time for package p
+param cl{p in 1..P}; 					#penalty cost if package p is late
+param h{v in 1..V}; 					#weight capacity of vehicle v
+param b{v in 1..V}; 					#type of vehicle v
+param a{i in 1..L}; 					#no. of operators whose home base is location i
+param l{i in 1..L}; 					#maximum number of vehicle that can be loaded at location i
+param u{i in 1..L}; 					#maximum number of vehicles that can be loaded at location i
+param cm{i in 1..L, j in 1..L}; 			#cost of relocating operator from location i to location j
+param t{v in 1..V, i in 1..L, j in 1..L}; 	#transit time from location i to j using vehicle v
+param co{v in 1..V, i in 1..L, j in 1..L}; 	#cost of operating vehicle v from i to j
+param M;
+
+var x{p in 1..P, v in 1..V} binary; 			#Binary variable to determine whether package p is shipped in vehicle v
+var y{v in 1..V, i in 1..L, j in 1..L} binary; 		#Binary variable to determine whether vehicle v goes from location i to j
+var z{i in 1..L, j in 1..L}>=0 integer; 					#number of operators relocated from i to j
+var T{p in 1..P} binary; 						#Binary variable to determine whether package p is not on time
+ 
+minimize Cost: 
+sum{p in 1..P}cl[p]*T[p] + sum{v in 1..V, i in 1..L, j in 1..L}co[v,i,j]*y[v,i,j] + sum{i in 1..L, j in 1..L}cm[i,j]*z[i,j];
+subject to 
+Constraint1{p in 1..P}: sum{v in 1..V}x[p,v]=1;
+Constraint2{v in 1..V}: sum{i in 1..L, j in 1..L}y[v,i,j]<=1;
+Constraint3{p in 1..P, v in 1..V}: x[p,v]<=y[v,s[p],e[p]];
+Constraint4{p in 1..P}: sum{v in 1..V}t[v,s[p],e[p]]*x[p,v]<=f[p]+M*T[p];
+Constraint5{i in 1..L}: sum{j in 1..L, v in 1..V}y[v,i,j]<=l[i];
+Constraint6{j in 1..L}: sum{i in 1..L, v in 1..V}y[v,i,j]<=u[j];
+Constraint7{k in 1..K, v in 1..V}: x[I[k,1],v]+x[I[k,2],v]<=1;
+Constraint8{i in 1..L}: sum{j in 1..L, v in 1..V}y[v,i,j]+sum{j in 1..L}z[i,j]-sum{j in 1..L}z[j,i]<=a[i];
+Constraint9{v in 1..V}: sum{p in 1..P}w[p]*x[p,v]<=h[v];
